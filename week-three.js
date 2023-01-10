@@ -3,52 +3,46 @@ addEventListener('fetch', event => {
 })
 
 async function handleRequest(request) {
-  // Make a subrequest to https://httpbin.org/get to get the headers
-  const subrequest = await fetch("https://httpbin.org/get", {
+  // Make a subrequest to httpbin.org to fetch headers
+  const subRequest = new Request('https://httpbin.org/get', {
     headers: request.headers
-  });
-  const headers = await subrequest.json();
+  })
+  const subResponse = await fetch(subRequest)
+  const headers = await subResponse.json()
 
-  // Check if 'cf.client.bot' header is present
-  if (headers['cf-client-bot']) {
-    // Send request to https://electricjellyfish.org and return a 200 response
-    const response = await fetch("https://electricjellyfish.org", {
-      headers: request.headers
-    });
+  // Get the X-Known-Bot and X-Bot-Score headers
+  const knownBotHeader = headers.headers['X-Known-Bot']
+  const botScoreHeader = headers.headers['X-Bot-Score']
 
+  // Check if the X-Known-Bot header is present
+  if (knownBotHeader) {
+    // Send the request to electricjellyfish.org and return a 200 response with application/json content type
+    const response = await fetch('https://electricjellyfish.org')
     return new Response(response.body, {
       status: 200,
-      headers: { 'content-type': 'application/json' }
-    });
+      headers: { 'Content-Type': 'application/json' }
+    })
   } else {
-    // Check if 'cf.bot_management.score' header is present
-    if (headers['cf-bot-management-score']) {
-      const score = parseFloat(headers['cf-bot-management-score']);
-
-      // Check the value of 'cf.bot_management.score'
-      if (score > 30) {
-        // Send request to https://electricjellyfish.org and return a 200 response
-        const response = await fetch("https://electricjellyfish.org", {
-          headers: request.headers
-        });
-
+    // Check if the X-Bot-Score header is present
+    if (botScoreHeader) {
+      // Evaluate the bot score
+      if (botScoreHeader > 30) {
+        // Send the request to electricjellyfish.org and return a 200 response with plain text content type
+        const response = await fetch('https://electricjellyfish.org')
         return new Response(response.body, {
           status: 200,
-          headers: { 'content-type': 'text/plain' }
-        });
+          headers: { 'Content-Type': 'text/plain' }
+        })
       } else {
-        // Return a 401 response in application/json format
+        // Return a 401 response with application/json content type
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
-          headers: { 'content-type': 'application/json' }
-        });
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
-    }
-    else {
-    return new Response(JSON.stringify({ error: 'Headers not present' }), {
-        status: 401,
-        headers: { 'content-type': 'application/json' }
-      });
+    } else {
+      // If neither header is present, send request directly to electricjellyfish.org
+      return await fetch('https://electricjellyfish.org')
     }
   }
 }
