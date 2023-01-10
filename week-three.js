@@ -10,12 +10,12 @@ async function handleRequest(request) {
   const subResponse = await fetch(subRequest)
   const headers = await subResponse.json()
 
-  // Get the X-Known-Bot and X-Bot-Score headers
+  // Get the X-Known-Bot header
   const knownBotHeader = headers.headers['X-Known-Bot']
   const botScoreHeader = headers.headers['X-Bot-Score']
 
-  // Check if the X-Known-Bot header is present
-  if (knownBotHeader) {
+  // Check if the X-Known-Bot header is present and its value equals to 'True'
+  if (knownBotHeader === 'True') {
     // Send the request to electricjellyfish.org and return a 200 response with application/json content type
     const response = await fetch('https://electricjellyfish.org')
     return new Response(response.body, {
@@ -46,4 +46,3 @@ async function handleRequest(request) {
     }
   }
 }
-
